@@ -27,7 +27,7 @@ def generate_more_details(url, query, api_key):
 # UI Starts here
 # Set background color using custom CSS
 st.set_page_config(page_title="YouTube Summarizer",
-                   page_icon='✅',
+                   page_icon='🧲',
                    layout='centered',
                    initial_sidebar_state='collapsed')
 st.header("Let me provide you with summaries of YouTube videos!")
@@ -47,7 +47,7 @@ st.markdown(css, unsafe_allow_html=True)
 if 'API_Key' not in st.session_state:
     st.session_state['API_Key'] = ''
 
-st.sidebar.title("😎")
+st.sidebar.title("👁👄👁")
 st.session_state['API_Key'] = st.sidebar.text_input("What's your API key?", type="password")
 
 with st.form("user_input_form"):
