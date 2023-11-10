@@ -1,18 +1,13 @@
 from langchain.document_loaders import YoutubeLoader
-from langchain.prompts import ChatPromptTemplate
 from langchain.chains.summarize import load_summarize_chain
-import pinecone as pin
 import openai
 from langchain.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import LLMChainExtractor
-from itertools import chain
-import os
-
+import pydantic
 
 
 # This function extracts the transcripts from the given youtube video
@@ -38,23 +33,44 @@ def store_information(yt_url, chunk_size, chunk_overlap):
 # This necassary to bypass the token limit that openai has, so that we can create
 # summaries of longer videos!
 def summarize_video(yt_url, apikey):
-    llm = OpenAI(temperature=0, model="babbage-002", openai_api_key=apikey)
-    documents = store_information(yt_url, 4000, 100)
-    chain = load_summarize_chain(llm, chain_type="map_reduce")
-    summary=chain.run(documents)
-    return summary
+    error = False
+    try:
+        llm = OpenAI(temperature=0, model="babbage-002", openai_api_key=apikey)
+        documents = store_information(yt_url, 4000, 100)
+        chain = load_summarize_chain(llm, chain_type="map_reduce")
+        summary = chain.run(documents)
+        return [summary, error]
+    except openai.error.AuthenticationError:
+        invalid_key_message = "Your OpenAI API key is invalid. Please try another."
+        error = True
+        return [invalid_key_message, error]
+    except pydantic.ValidationError:
+        invalid_key_message = "Please input your OpenAI API key. Access it in the sidebar by clicking the arrow in the top left corner of the page."
+        error = True
+        return [invalid_key_message, error]
+    except ValueError:
+        invalid_key_message = "Please input a valid YouTube url."
+        error = True
+        return [invalid_key_message, error]
+
 
 # create and store embeddings for similarity searches
 def vector_store(yt_url, api_key):
-    documents = store_information(yt_url, 500, 50)
-    db = FAISS.from_documents(documents, OpenAIEmbeddings(openai_api_key=api_key))
-    return db
+    try:
+        documents = store_information(yt_url, 500, 50)
+        db = FAISS.from_documents(documents, OpenAIEmbeddings(openai_api_key=api_key))
+        return db
+    except AttributeError:
+        invalid_key_message = "Your OpenAI API key is invalid. Please try another."
+        return invalid_key_message
 
 def pretty_print_docs(docs):
-    return f"\n{'-' * 100}\n".join([f"Document {i+1}\n\n" + d.page_content for i, d in enumerate(docs)])
+    return f"\n{'-' * 100}\n".join([f"Document: {i+1}\n\n" + d.page_content for i, d in enumerate(docs)])
 
 def search_query(yt_url, query, apikey):
     db = vector_store(yt_url, apikey)
+    if db is None:
+        return "Failed to retrieve data. Please make sure your API key is correct."
     # Wrap our vectorstore
     llm2 = OpenAI(temperature=0, openai_api_key=apikey)
     compressor = LLMChainExtractor.from_llm(llm2)

@@ -3,3 +3,4 @@ pytube
 langchain
 openai
 streamlit
+pydantic

@@ -33,6 +33,7 @@ st.set_page_config(page_title="YouTube Summarizer",
 st.header("Let me provide you with summaries of YouTube videos!")
 # Custom CSS to set the background color
 background_color = "rgb(300, 240, 330)"  # Adjust the color as needed
+
 css = f"""
     <style>
         .stApp {{
@@ -55,8 +56,12 @@ with st.form("user_input_form"):
 
 if submit:
     st.session_state.url = url  # Save the url to session_state
-    st.session_state.summary_generated = True
-    st.session_state.generated_summary = generate_summary(url, st.session_state['API_Key'])
+    st.session_state.generated_summary = generate_summary(url, st.session_state['API_Key'])[0]
+    err = generate_summary(url, st.session_state['API_Key'])[1]
+    if err == True:
+        st.session_state.summary_generated = False
+    else:
+        st.session_state.summary_generated = True
     summary_container = st.empty()
     summary_container.write(st.session_state.generated_summary)
 
@@ -73,7 +78,7 @@ if st.session_state.summary_generated:
         # details_container.write(generate_more_details(url, query, st.session_state['API_Key']))
         details = str(generate_more_details(url, query, st.session_state['API_Key']))
         details_container.markdown(f"""
-                    <p style='font-size: 18px; color: red;'>
+                    <p style='font-size: 18px; color: black;'>
                         {details}</p>""", 
                     unsafe_allow_html=True)
 
