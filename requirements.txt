@@ -4,3 +4,5 @@ langchain
 openai
 streamlit
 pydantic
+tiktoken
+faiss-cpu

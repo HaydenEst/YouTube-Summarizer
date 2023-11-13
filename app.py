@@ -47,7 +47,7 @@ st.markdown(css, unsafe_allow_html=True)
 if 'API_Key' not in st.session_state:
     st.session_state['API_Key'] = ''
 
-st.sidebar.title("👁👄👁")
+st.sidebar.title("🔐")
 st.session_state['API_Key'] = st.sidebar.text_input("What's your API key?", type="password")
 
 with st.form("user_input_form"):
@@ -76,11 +76,12 @@ if st.session_state.summary_generated:
         st.session_state.query = query  # Save the query to session_state
         details_container = st.empty()
         # details_container.write(generate_more_details(url, query, st.session_state['API_Key']))
-        details = str(generate_more_details(url, query, st.session_state['API_Key']))
-        details_container.markdown(f"""
-                    <p style='font-size: 18px; color: black;'>
-                        {details}</p>""", 
-                    unsafe_allow_html=True)
+        details = generate_more_details(url, query, st.session_state['API_Key'])
+        for doc in details:
+            details_container.markdown(f"""
+                        <p style='font-size: 18px; color: black;'>
+                            {"Items:  " + doc}</p>""", 
+                        unsafe_allow_html=True)
 
         st.markdown(f"""
                     <p style='font-size: 15px; color: green;'>
